@@ -1,0 +1,19 @@
+# Images and labels direcotry should be relative to train.py
+TRAIN_DIR_IMAGES: "/media/data4/home/vuhai/MOT_train/Varroa_detection/Datasets/coco_varroa_detect_70-15-15/train/"
+TRAIN_DIR_LABELS: "/media/data4/home/vuhai/MOT_train/Varroa_detection/Datasets/coco_varroa_detect_70-15-15/train/"
+VALID_DIR_IMAGES: "/media/data4/home/vuhai/MOT_train/Varroa_detection/Datasets/coco_varroa_detect_70-15-15/val/"
+VALID_DIR_LABELS: "/media/data4/home/vuhai/MOT_train/Varroa_detection/Datasets/coco_varroa_detect_70-15-15/val/"
+TEST_DIR_IMAGES: "/media/data4/home/vuhai/MOT_train/Varroa_detection/Datasets/coco_varroa_detect_70-15-15/test/"
+TEST_DIR_LABELS: "/media/data4/home/vuhai/MOT_train/Varroa_detection/Datasets/coco_varroa_detect_70-15-15/test/"
+
+# Class names.
+CLASSES: [
+    '__background__',
+    'varroa'
+]
+
+# Number of classes (object classes + 1 for background class in Faster RCNN).
+NC: 2
+
+# Whether to save the predictions of the validation set while training.
+SAVE_VALID_PREDICTION_IMAGES: True
