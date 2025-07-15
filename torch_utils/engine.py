@@ -9,6 +9,12 @@ from torch_utils.coco_eval import CocoEvaluator
 from torch_utils.coco_utils import get_coco_api_from_dataset
 from utils.general import save_validation_results
 
+from utils.logging import (
+    set_log, 
+    coco_log,
+    log
+)
+
 def train_one_epoch(
     model, 
     optimizer, 
@@ -57,8 +63,8 @@ def train_one_epoch(
         loss_value = losses_reduced.item()
 
         if not math.isfinite(loss_value):
-            print(f"Loss is {loss_value}, stopping training")
-            print(loss_dict_reduced)
+            log(f"Loss is {loss_value}, stopping training")
+            log(loss_dict_reduced)
             sys.exit(1)
 
         optimizer.zero_grad()
@@ -123,6 +129,7 @@ def evaluate(
     iou_types = _get_iou_types(model)
     coco_evaluator = CocoEvaluator(coco, iou_types)
 
+    val_saved_image = None
     counter = 0
     for images, targets in metric_logger.log_every(data_loader, 100, header):
         counter += 1
@@ -152,7 +159,7 @@ def evaluate(
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
-    print("Averaged stats:", metric_logger)
+    log("Averaged stats:", metric_logger)
     coco_evaluator.synchronize_between_processes()
 
     # accumulate predictions from all images

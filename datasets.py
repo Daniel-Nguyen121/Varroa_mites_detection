@@ -12,6 +12,11 @@ from utils.transforms import (
     get_train_transform, get_valid_transform,
     get_train_aug
 )
+from utils.logging import (
+    set_log, 
+    coco_log,
+    log
+)
 
 # the dataset class
 class CustomDataset(Dataset):
@@ -58,37 +63,27 @@ class CustomDataset(Dataset):
                 # remove_image = f"{'/'.join(image_root)}/{image_name}.jpg"
                 
                 #Change code here
-                #remove_image = os.path.join(os.sep.join(image_root), image_name+'.jpg')
-                remove_image = os.path.join(os.sep.join(image_root), image_name+'.png')
+                remove_image = os.path.join(os.sep.join(image_root), image_name+'.jpg')
+                #remove_image = os.path.join(os.sep.join(image_root), image_name+'.png')
                 #-----End-----#
                 
-                print(f"Removing {annot_path} and corresponding {remove_image}")
+                log(f"Removing {annot_path} and corresponding {remove_image}")
                 self.all_annot_paths.remove(annot_path)
                 self.all_image_paths.remove(remove_image)
 
         # Discard any image file when no annotation file 
         # is not found for the image. 
         for image_name in self.all_images:
-            
             #Change code here
-            #possible_xml_name = os.path.join(self.labels_path, image_name.split('.jpg')[0]+'.xml')
-            possible_xml_name = os.path.join(self.labels_path, image_name.split('.png')[0]+'.xml')
+            possible_xml_name = os.path.join(self.labels_path, image_name.split('.jpg')[0]+'.xml')
+            #possible_xml_name = os.path.join(self.labels_path, image_name.split('.png')[0]+'.xml')
             #-----End-----#
-            
             if possible_xml_name not in self.all_annot_paths:
-                print(f"{possible_xml_name} not found...")
-                print(f"Removing {image_name} image")
+                log(f"{possible_xml_name} not found...")
+                log(f"Removing {image_name} image")
                 # items = [item for item in items if item != element]
                 self.all_images = [image_instance for image_instance in self.all_images if image_instance != image_name]
                 # self.all_images.remove(image_name)
-
-        # for image_path in self.all_image_paths:
-        #     image_name = image_path.split(os.path.sep)[-1].split('.jpg')[0]
-        #     possible_xml_name = f"{self.labels_path}/{image_name.split('.jpg')[0]}.xml"
-        #     if possible_xml_name not in self.all_annot_paths:
-        #         print(f"{possible_xml_name} not found...")
-        #         print(f"Removing {image_name} image")
-        #         self.all_image_paths.remove(image_path)
 
     def load_image_and_labels(self, index):
         image_name = self.all_images[index]
@@ -263,18 +258,38 @@ class CustomDataset(Dataset):
         target["image_id"] = image_id
         if self.use_train_aug: # Use train augmentation if argument is passed.
             train_aug = get_train_aug()
+            
+            #Change code here
+            #sample = train_aug(image=image_resized,
+            #                         bboxes=target['boxes'],
+            #                         labels=labels)
+            #image_resized = sample['image']
+            #target['boxes'] = torch.Tensor(sample['bboxes'])
+            
             sample = train_aug(image=image_resized,
                                      bboxes=target['boxes'],
-                                     labels=labels)
+                                     labels=labels.tolist())
             image_resized = sample['image']
-            target['boxes'] = torch.Tensor(sample['bboxes'])
+            target['boxes'] = torch.tensor(sample['bboxes'], dtype=torch.float32)
+            target['labels'] = torch.tensor(sample['labels'], dtype=torch.int64)
+            #-----End-----#
+            
         else:
+        
+            #Change code here
+            #sample = self.transforms(image=image_resized,
+            #                         bboxes=target['boxes'],
+            #                         labels=labels)
+            #image_resized = sample['image']
+            #target['boxes'] = torch.Tensor(sample['bboxes'])
+            
             sample = self.transforms(image=image_resized,
                                      bboxes=target['boxes'],
-                                     labels=labels)
+                                     labels=labels.tolist())
             image_resized = sample['image']
-            target['boxes'] = torch.Tensor(sample['bboxes'])
-        
+            target['boxes'] = torch.tensor(sample['bboxes'], dtype=torch.float32)
+            target['labels'] = torch.tensor(sample['labels'], dtype=torch.int64)
+            #-----End-----#
             
         return image_resized, target
 

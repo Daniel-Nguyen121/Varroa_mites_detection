@@ -27,7 +27,8 @@ from utils.general import (
 )
 from utils.logging import (
     set_log, 
-    coco_log
+    coco_log,
+    log
 )
 
 import torch
@@ -49,16 +50,16 @@ def parse_opt():
         help='name of the model'
     )
     parser.add_argument(
-        '-c', '--config', default="/media/data4/home/vuhai/MOT_train/Varroa_detection/Detection_algos/fasterrcnn_resnet50_fpn_v2_varroa/data_configs/varroa.yaml",
+        '-c', '--config', default='/mnt/disk2/home/comvis/TungND/Detect-Track-MO/Varroa_detection/Varroa_detect/fasterrcnn_resnet50_fpn_v2_new_dataset/data_configs/varroa.yaml',
         help='path to the data config file'
     )
     parser.add_argument(
         '-d', '--device', 
-        default=torch.device('cuda:1' if torch.cuda.is_available() else 'cpu'),
+        default=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
         help='computation/training device, default is GPU if GPU present'
     )
     parser.add_argument(
-        '-e', '--epochs', default=100, type=int,
+        '-e', '--epochs', default=200, type=int,
         help='number of epochs to train for'
     )
     parser.add_argument(
@@ -74,7 +75,7 @@ def parse_opt():
         help='image size to feed to the network'
     )
     parser.add_argument(
-        '-pn', '--project-name', default='varroa_faster-r-cnn-2', type=str, dest='project_name',
+        '-pn', '--project-name', default=None, type=str, dest='project_name',
         help='training result dir name in outputs/training/, (default res_#)'
     )
     parser.add_argument(
@@ -149,8 +150,8 @@ def main(args):
     )
     train_loader = create_train_loader(train_dataset, BATCH_SIZE, NUM_WORKERS)
     valid_loader = create_valid_loader(valid_dataset, BATCH_SIZE, NUM_WORKERS)
-    print(f"Number of training samples: {len(train_dataset)}")
-    print(f"Number of validation samples: {len(valid_dataset)}\n")
+    log(f"Number of training samples: {len(train_dataset)}")
+    log(f"Number of validation samples: {len(valid_dataset)}\n")
 
     if VISUALIZE_TRANSFORMED_IMAGES:
         show_tranformed_image(train_loader, DEVICE, CLASSES, COLORS)
@@ -170,13 +171,13 @@ def main(args):
     start_epochs = 0
 
     if args['weights'] is None:
-        print('Building model from scratch...')
+        log('Building model from scratch...')
         build_model = create_model[args['model']]
         model = build_model(num_classes=NUM_CLASSES, pretrained=True)
 
     # Load pretrained weights if path is provided.
     if args['weights'] is not None:
-        print('Loading pretrained weights...')
+        log('Loading pretrained weights...')
         
         # Load the pretrained checkpoint.
         checkpoint = torch.load(args['weights'], map_location=DEVICE) 
@@ -202,32 +203,32 @@ def main(args):
         )
 
         if args['resume_training']:
-            print('RESUMING TRAINING...')
+            log('RESUMING TRAINING...')
             # Update the starting epochs, the batch-wise loss list, 
             # and the epoch-wise loss list.
             if checkpoint['epoch']:
                 start_epochs = checkpoint['epoch']
-                print(f"Resuming from epoch {start_epochs}...")
+                log(f"Resuming from epoch {start_epochs}...")
             if checkpoint['train_loss_list']:
-                print('Loading previous batch wise loss list...')
+                log('Loading previous batch wise loss list...')
                 train_loss_list = checkpoint['train_loss_list']
             if checkpoint['train_loss_list_epoch']:
-                print('Loading previous epoch wise loss list...')
+                log('Loading previous epoch wise loss list...')
                 train_loss_list_epoch = checkpoint['train_loss_list_epoch']
             if checkpoint['val_map']:
-                print('Loading previous mAP list')
+                log('Loading previous mAP list')
                 val_map = checkpoint['val_map']
             if checkpoint['val_map_05']:
                 val_map_05 = checkpoint['val_map_05']
         
-    print(model)
+    log(model)
     model = model.to(DEVICE)
     # Total parameters and trainable parameters.
     total_params = sum(p.numel() for p in model.parameters())
-    print(f"{total_params:,} total parameters.")
+    log(f"{total_params:,} total parameters.")
     total_trainable_params = sum(
         p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"{total_trainable_params:,} training parameters.")
+    log(f"{total_trainable_params:,} training parameters.")
     # Get the model parameters.
     params = [p for p in model.parameters() if p.requires_grad]
     # Define the optimizer.
@@ -235,7 +236,7 @@ def main(args):
     # optimizer = torch.optim.AdamW(params, lr=0.0001, weight_decay=0.0005)
     if args['resume_training']: 
         # LOAD THE OPTIMIZER STATE DICTIONARY FROM THE CHECKPOINT.
-        print('Loading optimizer state dictionary...')
+        log('Loading optimizer state dictionary...')
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
     if args['cosine_annealing']:
@@ -363,6 +364,34 @@ def main(args):
             data_configs,
             args['model']
         )
+        
+        #====== Test =====#
+        
+        TEST_DIR_IMAGES = data_configs['TEST_DIR_IMAGES']
+        TEST_DIR_LABELS = data_configs['TEST_DIR_LABELS']
+        
+        test_dataset = create_valid_dataset(
+            TEST_DIR_IMAGES, TEST_DIR_LABELS, 
+            IMAGE_WIDTH, IMAGE_HEIGHT, CLASSES
+        )
+        test_loader = create_valid_loader(test_dataset, BATCH_SIZE, NUM_WORKERS)
+        
+        
+        coco_evaluator_1, stats_1, test_pred_image = evaluate(
+            model, 
+            test_loader, 
+            device=DEVICE,
+            save_valid_preds=SAVE_VALID_PREDICTIONS,
+            out_dir="/mnt/disk2/home/comvis/TungND/Detect-Track-MO/Varroa_detection/Varroa_detect/fasterrcnn_resnet50_fpn_v2_new_dataset/outputs/training/test_image_demo/",
+            classes=CLASSES,
+            colors=COLORS
+        )
+        log(f'\n------------ TEST at Epoch {epoch} ------------\n')
+        log(f"Number of test samples: {len(test_dataset)}\n")
+        coco_log(OUT_DIR, stats_1)
+        log(f'\n-----------------------\n')
+
+        
 
 if __name__ == '__main__':
     args = parse_opt()

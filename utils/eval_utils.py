@@ -25,26 +25,12 @@ def evaluate_during_training(model, data_loader, device, classes, out_dir):
         )
         
         # Calculate validation loss
-        for batch_idx, (images, targets) in enumerate(data_loader):
+        for images, targets in data_loader:
             images = list(img.to(device) for img in images)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
             
             loss_dict = model(images, targets)
-            
-            # Debug information
-            print(f"\nBatch {batch_idx + 1} Loss Information:")
-            print(f"Type of loss_dict: {type(loss_dict)}")
-            
-            if isinstance(loss_dict, dict):
-                print("Loss dictionary keys:", loss_dict.keys())
-                print("Loss dictionary values:", {k: v.item() for k, v in loss_dict.items()})
-                losses = sum(loss for loss in loss_dict.values())
-            else:  # If it's a list
-                print("Loss list length:", len(loss_dict))
-                print("Loss list values:", [loss.item() for loss in loss_dict])
-                losses = sum(loss_dict)
-            
-            print(f"Total loss for batch: {losses.item():.4f}")
+            losses = sum(loss for loss in loss_dict.values())
             total_loss += losses.item()
             num_batches += 1
             
@@ -52,12 +38,11 @@ def evaluate_during_training(model, data_loader, device, classes, out_dir):
     
     # Calculate average validation loss
     val_loss = total_loss / num_batches if num_batches > 0 else 0.0
-    print(f"\nFinal Validation Loss: {val_loss:.4f}")
     
     # Return mAP@0.5:0.95, mAP@0.5, and validation loss
     return stats[0], stats[1], val_loss
 
-def evaluate_test_set(model, data_loader, device, classes, out_dir, threshold=0.3):
+def evaluate_test_set(model, data_loader, device, classes, out_dir, threshold=0.5):
     """Comprehensive evaluation on test set after training"""
     model.eval()
     

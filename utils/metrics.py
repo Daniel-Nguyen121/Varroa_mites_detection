@@ -9,6 +9,12 @@ from utils.general import Averager
 import os
 from typing import List, Optional, Union, Dict
 
+from utils.logging import (
+    set_log, 
+    coco_log,
+    log
+)
+
 class MetricsTracker:
     def __init__(self, out_dir: str):
         """Initialize metrics tracker with empty lists for all metrics"""
@@ -61,8 +67,8 @@ class MetricsTracker:
             # Check if this is the best model
             if val_map_epoch > self.best_map:
                 self.best_map = val_map_epoch
-                print(f"\nBEST VALIDATION mAP: {self.best_map:.4f}")
-                print(f"SAVING BEST MODEL FOR EPOCH: {epoch+1}\n")
+                log(f"\nBEST VALIDATION mAP: {self.best_map:.4f}")
+                log(f"SAVING BEST MODEL FOR EPOCH: {epoch+1}\n")
                 return True
         return False
 

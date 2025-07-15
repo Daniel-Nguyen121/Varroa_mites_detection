@@ -9,11 +9,26 @@ from torch_utils import utils
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
+from utils.logging import (
+    set_log, 
+    coco_log,
+    log
+)
 
 class CocoEvaluator:
     def __init__(self, coco_gt, iou_types):
         assert isinstance(iou_types, (list, tuple))
         coco_gt = copy.deepcopy(coco_gt)
+        
+        ### Change code here 
+        # Ensure the ground truth COCO object has the required 'info' field
+        if not hasattr(coco_gt, 'dataset') or 'info' not in coco_gt.dataset:
+            if hasattr(coco_gt, 'dataset'):
+                coco_gt.dataset['info'] = {}
+            else:
+                coco_gt.dataset = {'info': {}}
+        ### End change
+        
         self.coco_gt = coco_gt
 
         self.iou_types = iou_types
@@ -51,7 +66,7 @@ class CocoEvaluator:
 
     def summarize(self):
         for iou_type, coco_eval in self.coco_eval.items():
-            print(f"IoU metric: {iou_type}")
+            log(f"IoU metric: {iou_type}")
             coco_eval.summarize()
         return coco_eval.stats
 

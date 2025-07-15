@@ -1,0 +1,25 @@
+<annotation>
+  <folder>varroa</folder>
+  <filename>2017-08-28_09-30-00-1_500_dirty_glass.mp4-bee_id_6791-13845-1.png</filename>
+  <source>
+    <database>Varroa database</database>
+  </source>
+  <size>
+    <width>160</width>
+    <height>280</height>
+    <depth>3</depth>
+  </size>
+  <segmented>0</segmented>
+  <object>
+    <name>varroa</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <difficult>0</difficult>
+    <bndbox>
+      <xmin>79</xmin>
+      <ymin>99</ymin>
+      <xmax>108</xmax>
+      <ymax>125</ymax>
+    </bndbox>
+  </object>
+</annotation>

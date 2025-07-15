@@ -124,6 +124,7 @@ def evaluate(
     iou_types = _get_iou_types(model)
     coco_evaluator = CocoEvaluator(coco, iou_types)
 
+    val_saved_image = None  # Fix: always define this variable
     counter = 0
     for images, targets in metric_logger.log_every(data_loader, 100, header):
         counter += 1

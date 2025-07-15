@@ -1,0 +1,22 @@
+# Base----------------------------------
+albumentations
+matplotlib
+opencv-python
+Pillow
+PyYAML
+scikit-image
+scikit-learn
+scipy
+torch
+torchvision
+numpy
+protobuf
+pandas
+
+# Logging----------------------------------
+wandb
+tensorboard
+
+# Extras----------------------------------
+pycocotools
+setuptools

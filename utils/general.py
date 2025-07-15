@@ -4,6 +4,12 @@ import torch
 import matplotlib.pyplot as plt
 import os
 
+from utils.logging import (
+    set_log, 
+    coco_log,
+    log
+)
+
 plt.style.use('ggplot')
 
 # this class keeps track of the training and validation loss values...
@@ -50,8 +56,8 @@ class SaveBestModel:
     ):
         if current_valid_map > self.best_valid_map:
             self.best_valid_map = current_valid_map
-            print(f"\nBEST VALIDATION mAP: {self.best_valid_map}")
-            print(f"\nSAVING BEST MODEL FOR EPOCH: {epoch+1}\n")
+            log(f"\nBEST VALIDATION mAP: {self.best_valid_map}")
+            log(f"\nSAVING BEST MODEL FOR EPOCH: {epoch+1}\n")
             torch.save({
                 'epoch': epoch+1,
                 'model_state_dict': model.state_dict(),
@@ -111,7 +117,7 @@ def save_loss_plot(
     train_ax.set_xlabel(x_label)
     train_ax.set_ylabel(y_label)
     figure_1.savefig(f"{OUT_DIR}/{save_name}.png")
-    print('SAVING PLOTS COMPLETE...')
+    log('SAVING PLOTS COMPLETE...')
     # plt.close('all')
 
 def save_mAP(OUT_DIR, map_05, map):
@@ -139,8 +145,8 @@ def save_mAP(OUT_DIR, map_05, map):
     # plt.close('all')
 
 def visualize_mosaic_images(boxes, labels, image_resized, classes):
-    print(boxes)
-    print(labels)
+    log(boxes)
+    log(labels)
     image_resized = cv2.cvtColor(image_resized, cv2.COLOR_RGB2BGR)
     for j, box in enumerate(boxes):
         color = (0, 255, 0)

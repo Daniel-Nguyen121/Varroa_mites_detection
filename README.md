@@ -1,102 +1,466 @@
-# README
+# Varroa Detection using Faster R-CNN
 
-**Object Detection using PyTorch Faster RCNN ResNet50 FPN V2 trained on PPE datasets**
+This repository contains a complete implementation of Faster R-CNN (ResNet50 FPN v2) for Varroa mite detection in bee colonies. The project supports training, evaluation, and inference on both images and videos.
 
-PyTorch recently released an improved version of the Faster RCNN object detection model. They call it the Faster RCNN ResNet50 FPN V2. This model is miles ahead in terms of detection quality compared to its predecessor, the original Faster RCNN ResNet50 FPN. In this repo, we will discover what makes the new Faster RCNN model better, why it is better, and what kind of detection results we can expect from it.
-To improve the Faster RCNN ResNet50 (to get the V2 version) model, changes were made to both:
+## 📋 Table of Contents
 
-* The ResNet50 backbone recipe
-* The object detection modules of Faster RCNN
+- [Overview](#overview)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Data Preparation](#data-preparation)
+- [Configuration](#configuration)
+- [Training](#training)
+- [Evaluation](#evaluation)
+- [Inference](#inference)
+- [Model Architecture](#model-architecture)
+- [Troubleshooting](#troubleshooting)
 
-### Let’s check out all the points that we will cover in this post:
+## 🎯 Overview
 
-* We will fine-tune the Faster RCNN ResNet50 FPN V2 model in this post.
-* For training, we will use a PPE detection dataset.
-* After training, we will analyze the mAP and loss plots.
-* We will also run inference on videos to check how the model performs in real-world scenarios.
+This project implements a Faster R-CNN object detection model specifically designed for detecting Varroa mites in bee colony images. The model uses ResNet50 FPN v2 as the backbone and is trained to detect Varroa mites with high precision.
 
-### The PPE Detection Dataset
-To train the object detection model in this post, we will use the COVID-19 PPE Dataset for Object Detection from Kaggle (https://www.kaggle.com/datasets/ialimustufa/object-detection-for-ppe-covid19-dataset).
+**Key Features:**
+- Faster R-CNN with ResNet50 FPN v2 backbone
+- COCO format dataset support
+- Comprehensive training and evaluation pipeline
+- Real-time inference on images and videos
+- Detailed metrics and visualization
 
-The dataset contains images of medical personnel wearing PPE kits for the COVID-19 pandemic. It consists of 366 training images and 50 test images across 5 classes. Also, it is worthwhile to note that the dataset is structured in the Pascal VOC XML format.
+## 🔧 Requirements
 
-The class names given on the Kaggle page and those in the XML files slightly mismatch. As we will be using the class names from the XML files, let’s take a look at them:
+### System Requirements
+- Python 3.7+
+- CUDA-compatible GPU (recommended for training)
+- At least 8GB RAM
+- 2GB+ free disk space for dataset and model storage
 
-Mask, Face_Shield, Coverall, Gloves, Goggles
+### Python Dependencies
 
-### Pretraining ResNet50 Backbone
+Install the required packages:
 
-Pretraining the ResNet50 backbone is an essential task in improving the performance of the entire object detection model. The ResNet50 (as well as many other classification models) model was trained with a new training recipe. These include, but are not limited to:
+```bash
+pip install -r requirements.txt
+```
 
-* Learning rate optimizations.
-* Longer training.
-* Augmentation such as TrivialAugment, Random Erasing,  MixUp, and CutMix.
-* Repeated Augmentation
-* EMA
-* Weight Decay Tuning
+**Core Dependencies:**
+- PyTorch & TorchVision
+- OpenCV
+- NumPy
+- Matplotlib
+- PyYAML
+- Albumentations
+- COCO API (pycocotools)
 
-With these new techniques, the ResNet50 Accuracy@1 jumps to 80.858% from the previous 76.130%.
+**Optional Dependencies:**
+- Weights & Biases (wandb) for experiment tracking
+- TensorBoard for training visualization
 
-Training the Faster RCNN ResNet50 FPN V2 Model
-As mentioned earlier, most of the improvements to train the entire object detection model were taken from the aforementioned paper.
+## 📦 Installation
 
-The contributors to these improvements call these improvements as per post-paper optimization. These include:
+1. **Clone the repository:**
+```bash
+git clone <repository-url>
+cd fasterrcnn_resnet50_fpn_v2
+```
 
-* FPN with batch normalization.
-* Using two convolutional layers in the Region Proposal * Network (RPN) instead of one. In other words, using a heavier FPN module.
-* Using a heavier box regression head. To be specific, using four convolutional layers with Batch Normalization followed by linear layer. Previously, a two layer MLP head without Batch Normalization was used.
-* No Frozen Batch Normalizations were used.
+2. **Install dependencies:**
+```bash
+pip install -r requirements.txt
+```
 
-Using the above recipe improves the mAP from the previous 37.0% to 46.7%, a whopping 9.7% increase in mAP.
+3. **Verify installation:**
+```bash
+python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
+python -c "import torchvision; print(f'TorchVision version: {torchvision.__version__}')"
+```
 
-## Directory Structure
+## 📊 Data Preparation
 
-* The data folder contains the dataset for this project in the data/ppe folder. The train and test folders contain the images along with the XML files.
-* The data_configs directory contains the dataset information and configuration. We will look at it at a later stage in the post.
+### 1. Download Dataset
 
-We have the script for two models in the models directory. One is for the older Faster RCNN ResNet50 FPN and the other is for the FPN V2 one. We can use either one of them during training just by changing one command line flag value.
+Download the Varroa detection dataset from:
+```
+https://demo.data (Contact us to get the dataset)
+```
 
-* The outputs directory will hold all the training outputs.
+The dataset should be in COCO format with the following structure:
+```
+dataset/
+├── train/
+│   ├── images/
+│   └── annotations.json
+├── val/
+│   ├── images/
+│   └── annotations.json
+└── test/
+    ├── images/
+    └── annotations.json
+```
 
-We have a torch_utils and a utils directory which holds a lot of helper code and training utilities. We will not be diving into the details of these here. But you are free to check them out.
+### 2. Convert YOLO to COCO Format (if needed)
 
-* There are two inference scripts as well, one for image inference and one for video inference. Along with that, we have the datasets.py for preparing the dataset and data loaders. The train.py is the executable script to start the training.
+If your data is in YOLO format, use the conversion script:
 
-#### Train the Faster RCNN Model
+```bash
+python /mnt/disk2/home/comvis/TungND/Detect-Track-MO/Varroa_detection/Varroa_detect/convert_yolo2coco.py
+```
 
-`python train.py --model fasterrcnn_resnet50_fpn_v2 --config data_configs/ppe.yaml --epochs 50 --project-name fasterrcnn_resnet50_fpn_v2_ppe --use-train-aug --no-mosaic`
+**Important:** Before running the conversion script, you need to modify the code in the "Change code here" block:
 
-The following are the command line arguments that we use:
+```python
+# Change code here
+# Uncomment/comment the appropriate lines based on your image format:
 
-* --model: Here, we use fasterrcnn_resnet50_fpn_v2 to indicate that we want to train the new Faster RCNN model. To train the older model, you can simply provide the value as fasterrcnn_resnet50_fpn.
-* --config: It takes the path to the dataset configuration file which is data/ppe.yaml file in this case.
-* --epochs: We are training the model for 50 epochs.
-* --project-name: Providing a string value to this argument will save the results with that folder name inside outputs/training. In this case, it is going to be outputs/training/fasterrcnn_resnet50_fpn_v2_ppe.
-* --use-train-aug: The data loader supports various image augmentations. This argument is a boolean value that ensures that those augmentations are applied.
-* --no-mosaic: Additionally, the data loader also supports mosaic augmentation. But providing this boolean argument will turn it off.
+# For .jpg images:
+remove_image = os.path.join(os.sep.join(image_root), image_name+'.jpg')
+possible_xml_name = os.path.join(self.labels_path, image_name.split('.jpg')[0]+'.xml')
 
-You can also get the trained model here: https://drive.google.com/drive/folders/15j7tPtCfyhb2yhN4ovS6pHag8ARFt2gL?usp=sharing which will be then placed in a folder training inside the outputs folder.
+# For .png images:
+# remove_image = os.path.join(os.sep.join(image_root), image_name+'.png')
+# possible_xml_name = os.path.join(self.labels_path, image_name.split('.png')[0]+'.xml')
+#-----End-----#
+```
 
-#### Executing detect_video.py for Video Inference
+### 3. Dataset Structure
 
-`python inference_video.py --weights outputs/training/fasterrcnn_resnet50_fpn_v2_ppe/best_model.pth --input data/inference_data/video_1.mp4 --show-image --threshold 0.9 /`
+After conversion, ensure your dataset follows this structure:
+```
+your_dataset/
+├── train/
+│   ├── image1.jpg
+│   ├── image1.xml
+│   ├── image2.jpg
+│   └── image2.xml
+├── val/
+│   ├── image3.jpg
+│   ├── image3.xml
+│   ├── image4.jpg
+│   └── image4.xml
+└── test/
+    ├── image5.jpg
+    ├── image5.xml
+    ├── image6.jpg
+    └── image6.xml
+```
 
-The following are the command line arguments:
+## ⚙️ Configuration
 
-* --weights: Path to the weights file. We are using best-trained weights here.
-* --input: Path to the source video. You may give the path to your own videos as well.
-* --show-image: This tells the script that we want to visualize the results on the screen.
-* --threshold: We are using a confidence threshold of 90% for the visualizations.
+### 1. Data Configuration Files
 
-## Important Links
+The project uses YAML configuration files to define dataset paths and parameters. Two example configurations are provided:
 
-* https://github.com/pytorch/vision/pull/5763
-* https://github.com/pytorch/vision/pull/5444
-* https://github.com/pytorch/vision/issues/5307
-* https://github.com/pytorch/vision/issues/3995
-* Improving the Backbones - How to Train State-Of-The-Art Models Using TorchVision’s Latest Primitives => https://pytorch.org/blog/how-to-train-state-of-the-art-models-using-torchvision-latest-primitives/
-* Direct Link to new ResNet50 Training recipe.
+- `data_configs/varroa.yaml` - For standard dataset
+- `data_configs/varroa_1820.yaml` - For extended dataset
 
-## Summary and Conclusion
+### 2. Configuration Parameters
 
-In this repo post, we set up an entire pipeline for training the PyTorch Faster RCNN ResNet50 FPN V2 object detection model. Although we were not able to achieve the best fine tuning results, we will surely do so in the future. I hope that you learned something new from this tutorial.
+Edit the configuration file to match your dataset paths:
+
+```yaml
+# data_configs/varroa.yaml
+TRAIN_DIR_IMAGES: "/path/to/your/dataset/train/"
+TRAIN_DIR_LABELS: "/path/to/your/dataset/train/"
+VALID_DIR_IMAGES: "/path/to/your/dataset/val/"
+VALID_DIR_LABELS: "/path/to/your/dataset/val/"
+TEST_DIR_IMAGES: "/path/to/your/dataset/test/"
+TEST_DIR_LABELS: "/path/to/your/dataset/test/"
+
+# Class names (background class + object classes)
+CLASSES: [
+    '__background__',
+    'varroa'
+]
+
+# Number of classes (object classes + 1 for background)
+NC: 2
+
+# Whether to save validation predictions during training
+SAVE_VALID_PREDICTION_IMAGES: True
+```
+
+## 🚀 Training
+
+### 1. Basic Training
+
+Train the model with default settings:
+
+```bash
+python train.py \
+    --model fasterrcnn_resnet50_fpn_v2 \
+    --config data_configs/varroa.yaml \
+    --epochs 200 \
+    --batch-size 8 \
+    --img-size 800
+```
+
+### 2. Advanced Training Options
+
+**Training with custom project name:**
+```bash
+python train.py \
+    --model fasterrcnn_resnet50_fpn_v2 \
+    --config data_configs/varroa.yaml \
+    --epochs 200 \
+    --batch-size 8 \
+    --project-name varroa_detection_v1 \
+    --img-size 800
+```
+
+**Training with additional augmentations:**
+```bash
+python train.py \
+    --model fasterrcnn_resnet50_fpn_v2 \
+    --config data_configs/varroa.yaml \
+    --epochs 200 \
+    --batch-size 8 \
+    --use-train-aug \
+    --project-name varroa_detection_aug
+```
+
+**Training without mosaic augmentation:**
+```bash
+python train.py \
+    --model fasterrcnn_resnet50_fpn_v2 \
+    --config data_configs/varroa.yaml \
+    --epochs 200 \
+    --batch-size 8 \
+    --no-mosaic \
+    --project-name varroa_detection_no_mosaic
+```
+
+**Training with cosine annealing scheduler:**
+```bash
+python train.py \
+    --model fasterrcnn_resnet50_fpn_v2 \
+    --config data_configs/varroa.yaml \
+    --epochs 200 \
+    --batch-size 8 \
+    --cosine-annealing \
+    --project-name varroa_detection_cosine
+```
+
+### 3. Training Parameters
+
+| Parameter | Description | Default | Options |
+|-----------|-------------|---------|---------|
+| `--model` | Model architecture | `fasterrcnn_resnet50_fpn_v2` | `fasterrcnn_resnet50_fpn`, `fasterrcnn_resnet50_fpn_v2` |
+| `--config` | Data configuration file | `data_configs/varroa.yaml` | Path to YAML config |
+| `--epochs` | Number of training epochs | `200` | Integer |
+| `--batch-size` | Batch size | `8` | Integer |
+| `--img-size` | Input image size | `800` | Integer |
+| `--project-name` | Output directory name | Auto-generated | String |
+| `--use-train-aug` | Enable additional augmentations | False | Flag |
+| `--no-mosaic` | Disable mosaic augmentation | False | Flag |
+| `--cosine-annealing` | Use cosine annealing scheduler | False | Flag |
+| `--weights` | Path to pretrained weights | None | Path |
+| `--resume-training` | Resume from checkpoint | False | Flag |
+
+### 4. Training Output
+
+Training outputs are saved in `outputs/training/[project_name]/`:
+
+- `best_model.pth` - Best model weights
+- `last_model.pth` - Last epoch weights
+- `train_loss.png` - Training loss plot
+- `train_loss_epoch.png` - Epoch-wise loss plot
+- `mAP.png` - Mean Average Precision plot
+- `loss_cls.png` - Classification loss plot
+- `loss_bbox_reg.png` - Bounding box regression loss plot
+- `loss_obj.png` - Objectness loss plot
+- `loss_rpn_bbox.png` - RPN bounding box loss plot
+
+## 📈 Evaluation
+
+### 1. Model Evaluation
+
+Evaluate a trained model:
+
+```bash
+python eval_faster.py
+```
+
+**Configuration in eval_faster.py:**
+```python
+# Change these paths in eval_faster.py
+CONFIG_PATH = "data_configs/varroa.yaml"
+MODEL_PATH = "outputs/training/your_project/best_model.pth"
+```
+
+### 2. Evaluation Metrics
+
+The evaluation provides comprehensive metrics:
+
+**Detection Metrics:**
+- Precision, Recall, F1-Score
+- AP@50 (Average Precision at IoU=0.5)
+- AP@[50:95] (Average Precision at IoU=0.5:0.95)
+
+**Performance Metrics:**
+- Inference time per image
+- FPS (Frames Per Second)
+- Pre-processing, inference, and post-processing times
+
+**Model Complexity:**
+- Number of layers
+- Trainable parameters
+- GFLOPs (computational complexity)
+
+### 3. Evaluation Output
+
+The evaluation script outputs detailed results:
+
+```
+============================================================
+EVALUATION RESULTS
+============================================================
+Precision: 0.9234
+Recall: 0.8956
+F1-Score: 0.9093
+AP@50: 0.9123
+AP@[50:95]: 0.6789
+------------------------------------------------------------
+Preprocessing time: 15.2 ms
+Inference time: 45.8 ms
+Post-processing time: 8.1 ms
+Total time: 69.1 ms
+FPS: 14.5
+------------------------------------------------------------
+Number of layers: 284
+Trainable parameters: 41,177,026
+GFLOPs: 45.2
+============================================================
+```
+
+## 🔍 Inference
+
+### 1. Image Inference
+
+Run inference on single images or directories:
+
+```bash
+python inference.py \
+    --input path/to/image.jpg \
+    --weights outputs/training/your_project/best_model.pth \
+    --config data_configs/varroa.yaml \
+    --threshold 0.5 \
+    --show-image
+```
+
+**Inference Parameters:**
+- `--input`: Path to image or directory
+- `--weights`: Path to trained model weights
+- `--config`: Data configuration file
+- `--threshold`: Detection confidence threshold (default: 0.3)
+- `--show-image`: Display results in real-time
+- `--mpl-show`: Show results using matplotlib
+
+### 2. Video Inference
+
+Run inference on video files:
+
+```bash
+python inference_video.py \
+    --input path/to/video.mp4 \
+    --weights outputs/training/your_project/best_model.pth \
+    --config data_configs/varroa.yaml \
+    --threshold 0.5 \
+    --show-image
+```
+
+**Video Inference Features:**
+- Real-time processing with FPS display
+- Output video with detection annotations
+- Configurable detection threshold
+- Support for various video formats
+
+### 3. Pretrained Models
+
+Download pretrained model weights from:
+```
+[Link_weights](https://drive.google.com/drive/folders/1JrC8919cBcAYNlSjJwo6TjnzFt-BYpez?usp=sharing)
+```
+
+## 🏗️ Model Architecture
+
+### Faster R-CNN with ResNet50 FPN v2
+
+The model architecture consists of:
+
+1. **Backbone**: ResNet50 with Feature Pyramid Network (FPN)
+2. **Region Proposal Network (RPN)**: Generates region proposals
+3. **RoI Heads**: Classifies proposals and refines bounding boxes
+4. **Detection Head**: Final classification and regression layers
+
+**Model Specifications:**
+- Input size: 800×800 pixels
+- Number of classes: 2 (background + varroa)
+- Total parameters: ~41M
+- GFLOPs: ~45.2
+
+### Model Variants
+
+Two model variants are supported:
+
+1. **fasterrcnn_resnet50_fpn**: Standard Faster R-CNN
+2. **fasterrcnn_resnet50_fpn_v2**: Enhanced version with improved performance
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**1. CUDA Out of Memory**
+```bash
+# Reduce batch size
+python train.py --batch-size 4
+
+# Reduce image size
+python train.py --img-size 640
+```
+
+**2. Dataset Loading Errors**
+- Verify dataset paths in configuration file
+- Ensure images and annotations are paired correctly
+- Check file permissions
+
+**3. Model Loading Errors**
+- Verify model weights path
+- Ensure model architecture matches weights
+- Check CUDA compatibility
+
+**4. Training Convergence Issues**
+- Try different learning rates
+- Enable cosine annealing scheduler
+- Adjust augmentation settings
+- Increase training epochs
+
+### Performance Optimization
+
+**For Training:**
+- Use GPU with sufficient VRAM (8GB+ recommended)
+- Adjust batch size based on available memory
+- Use mixed precision training if available
+
+**For Inference:**
+- Use GPU for real-time performance
+- Adjust detection threshold for speed/accuracy trade-off
+- Consider model quantization for deployment
+
+### Debug Mode
+
+Enable debug output by modifying the evaluation script:
+
+```python
+# In eval_faster.py, enable debug prints
+print(f"DEBUG - Sample data:")
+print(f"  Pred boxes shape: {boxes.shape}")
+print(f"  GT boxes shape: {gt_boxes.shape}")
+```
+
+## 📚 Additional Resources
+
+- [PyTorch Documentation](https://pytorch.org/docs/)
+- [TorchVision Models](https://pytorch.org/vision/stable/models.html)
+- [COCO Dataset Format](https://cocodataset.org/#format-data)
+- [Faster R-CNN Paper](https://arxiv.org/abs/1506.01497)
+
+**Note:** This project is specifically designed for Varroa mite detection in bee colonies. For other object detection tasks, modify the configuration files and class definitions accordingly. 
