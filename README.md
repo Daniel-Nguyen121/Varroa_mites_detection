@@ -12,6 +12,7 @@ This repository contains a complete implementation of Faster R-CNN (ResNet50 FPN
 - [Training](#training)
 - [Evaluation](#evaluation)
 - [Inference](#inference)
+- [D-RISE Explanation](#d-rise-explanation)
 - [Model Architecture](#model-architecture)
 - [Troubleshooting](#troubleshooting)
 
@@ -376,6 +377,103 @@ python inference_video.py \
 ### 3. Pretrained Models
 
 Download pretrained model weights from: [Link weights](https://drive.google.com/drive/folders/1JrC8919cBcAYNlSjJwo6TjnzFt-BYpez?usp=sharing)
+
+## 🔍 D-RISE Explanation
+
+### Overview
+
+The `D-RISE_explained_yolo_version` folder contains an implementation of D-RISE (Detection and Recognition Independent Subpopulation Explanation) for explaining YOLO model predictions in varroa mite detection. This tool helps visualize and understand what regions of the input image the YOLO model focuses on when making detection decisions.
+
+### Features
+
+- **Heatmap Visualization**: Generate attention heatmaps showing model focus areas
+- **Multiple Sample Support**: Process individual images or batches
+- **Customizable Parameters**: Adjust explanation parameters for different use cases
+- **Output Organization**: Structured output with separate folders for different samples
+
+### Setup
+
+1. **Download YOLO Weights**:
+   Download the YOLO model weights from: [YOLO Weights](https://drive.google.com/drive/folders/1i7v3uT1ioaT1iuQPefan1J5sqmJs5NVa?usp=sharing)
+
+2. **Install Dependencies**:
+   ```bash
+   cd D-RISE_explained_yolo_version
+   pip install -r requirements.txt  # if requirements file exists
+   ```
+
+3. **Prepare Input Samples**:
+   Place your test images in the `Visualization/input_samples/` directory structure:
+   ```
+   D-RISE_explained_yolo_version/
+   └── Visualization/
+       └── input_samples/
+           ├── Fol_1/
+           │   ├── sample1.jpg
+           │   ├── sample1.txt
+           │   └── ...
+           └── Fol_2/
+               ├── sample2.jpg
+               ├── sample2.txt
+               └── ...
+   ```
+
+### Usage
+
+1. **Run D-RISE Explanation**:
+   ```bash
+   cd D-RISE_explained_yolo_version
+   python yolo_d_rise.py
+   ```
+
+2. **Configure Parameters**:
+   Edit the parameters in `yolo_d_rise.py` as needed:
+   ```python
+   # Model configuration
+   model_path = "path/to/your/yolo_weights.pt"
+   conf_threshold = 0.5
+   iou_threshold = 0.45
+   
+   # D-RISE parameters
+   num_samples = 1000
+   grid_size = 8
+   prob_threshold = 0.5
+   ```
+
+3. **View Results**:
+   Generated heatmaps will be saved in `Visualization/output/`:
+   ```
+   Visualization/
+   └── output/
+       ├── Fol_1/
+       │   └── yolo12x/
+       │       ├── heatmap_combined_sample1.png
+       │       └── ...
+       └── Fol_2/
+           └── yolo12x_1820/
+               ├── heatmap_combined_sample2.jpg
+               └── ...
+   ```
+
+### Understanding the Output
+
+- **Heatmap Colors**: Red areas indicate high attention, blue areas indicate low attention
+- **Combined Heatmaps**: Show both detection boxes and attention regions
+- **File Naming**: Output files are named based on input sample names with "heatmap_combined_" prefix
+
+### Customization
+
+- **Model Path**: Update the model path to use your specific YOLO weights
+- **Sample Folders**: Add new folders in `input_samples/` for different test sets
+- **Parameters**: Adjust D-RISE parameters for different explanation granularity
+- **Output Format**: Modify visualization settings for different output formats
+
+### Troubleshooting
+
+- **Model Loading**: Ensure YOLO weights are compatible with the YOLO version used
+- **Memory Issues**: Reduce `num_samples` or `grid_size` for lower memory usage
+- **File Paths**: Verify all input and output paths are correctly set
+- **Dependencies**: Ensure all required packages are installed
 
 ## 🏗️ Model Architecture
 
