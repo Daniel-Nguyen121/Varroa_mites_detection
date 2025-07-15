@@ -375,10 +375,7 @@ python inference_video.py \
 
 ### 3. Pretrained Models
 
-Download pretrained model weights from:
-```
-[Link_weights](https://drive.google.com/drive/folders/1JrC8919cBcAYNlSjJwo6TjnzFt-BYpez?usp=sharing)
-```
+Download pretrained model weights from: [Link weights](https://drive.google.com/drive/folders/1JrC8919cBcAYNlSjJwo6TjnzFt-BYpez?usp=sharing)
 
 ## 🏗️ Model Architecture
 
